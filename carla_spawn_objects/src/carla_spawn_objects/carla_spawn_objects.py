@@ -135,8 +135,10 @@ class CarlaSpawnObjects(CompatibleNode):
                 spawn_object_request.id = vehicle["id"]
                 spawn_object_request.attach_to = 0
                 spawn_object_request.random_pose = False
+                spawn_object_request.use_index = False
 
                 spawn_point = None
+                spawn_index = None
 
                 # check if there's a spawn_point corresponding to this vehicle
                 spawn_point_param = self.get_param("spawn_point_" + vehicle["id"], None)
@@ -166,16 +168,23 @@ class CarlaSpawnObjects(CompatibleNode):
                     except KeyError as e:
                         self.logerr("{}: Could not use the spawn point from config file, ".format(vehicle["id"]) +
                                     "the mandatory attribute {} is missing, a random spawn point will be used".format(e))
+                elif "spawn_index" in vehicle:
+                    spawn_index = vehicle["spawn_index"]
+                    spawn_object_request.use_index = True
+                    self.loginfo("Spawn index from configuration file")
 
                 if spawn_point is None:
                     # pose not specified, ask for a random one in the service call
                     self.loginfo("Spawn point selected at random")
                     spawn_point = Pose()  # empty pose
-                    spawn_object_request.random_pose = True
+                    if spawn_index is None:
+                        spawn_index = 0
+                        spawn_object_request.random_pose = True
 
                 player_spawned = False
                 while not player_spawned and roscomp.ok():
                     spawn_object_request.transform = spawn_point
+                    spawn_object_request.spawn_index = spawn_index
 
                     response_id = self.spawn_object(spawn_object_request)
                     if response_id != -1:

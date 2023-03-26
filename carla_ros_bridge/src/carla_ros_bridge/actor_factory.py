@@ -207,7 +207,10 @@ class ActorFactory(object):
         for attribute in req.attributes:
             blueprint.set_attribute(attribute.key, attribute.value)
         if req.random_pose is False:
-            transform = trans.ros_pose_to_carla_transform(req.transform)
+            if req.use_index:
+                transform = self.spawn_points[req.spawn_index]
+            else:
+                transform = trans.ros_pose_to_carla_transform(req.transform)
         else:
             # get a random pose
             transform = secure_random.choice(
